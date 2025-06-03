@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>台南公車路線查詢</title>
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+    background-color: #cba3c8;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  header img {
+    height: 40px;
+    margin-right: 1rem;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin: 0;
+  }
+  .container {
+    margin: 2rem auto;
+    max-width: 320px;
+  }
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  label {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  select, input[type="time"] {
+    width: 100%;
+    padding: 0.5rem;
+    box-sizing: border-box;
+  }
+  button {
+    padding: 0.5rem 1rem;
+    background-color: #cba3c8;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  #result {
+    margin-top: 2rem;
+  }
+  #routeImage {
+    max-width: 100%;
+    height: auto;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="img/logo.png" alt="Logo" />
+</header>
+<div>
+    <h1>台南公車路線查詢</h1>
+</div>
+<div class="container">
+  <!-- 類型選擇 -->
+  <div class="form-group">
+    <label for="typeSelect">公車類型：</label>
+    <select id="typeSelect">
+      <option value="">--請選擇--</option>
+      <option value="市區公車">市區公車</option>
+      <option value="觀光公車">觀光公車</option>
+      <option value="高鐵接駁車">高鐵接駁車</option>
+      <option value="雙層巴士">雙層巴士</option>
+      <option value="小黃公車">小黃公車</option>
+      <option value="厝邊公車">厝邊公車</option>
+      <option value="綠線車">綠線</option>
+      <option value="藍線">藍線</option>
+      <option value="棕線">棕線</option>
+      <option value="橘線">橘線</option>
+      <option value="黃線">黃線</option>
+      <option value="紅線">紅線</option>
+    </select>
+  </div>
+  <!-- 路線選擇 -->
+  <div class="form-group">
+    <label for="routeSelect">選擇路線：</label>
+    <select id="routeSelect">
+      <option value="">--請選擇--</option>
+      <option value="0右(環狀線)">0右(環狀線)</option>
+      <option value="0左(環狀線)">0左(環狀線)</option>
+      <option value="1路">1路</option>
+      <option value="2路">2路</option>
+      <option value="3路">3路</option>
+      <option value="5路">5路</option>
+      <option value="6路">6路</option>
+      <option value="7路">7路</option>
+      <option value="9路">9路</option>
+      <option value="10路">10路</option>
+      <option value="11路">11路</option>
+      <option value="14路">14路</option>
+      <option value="15路">15路</option>
+      <option value="18路">18路</option>
+      <option value="19路">19路</option>
+      <option value="20路">20路</option>
+      <option value="21路">21路</option>
+      <option value="32路">32路</option>
+      <option value="62路">62路</option>
+      <option value="70路">70路</option>
+      <option value="77路">77路</option>
+    </select>
+  </div>
+  <!-- 方向選擇 -->
+  <div class="form-group">
+    <label for="directionSelect">選擇方向：</label>
+    <select id="directionSelect">
+      <option value="">--請選擇--</option>
+      <option value="往安平">往安平</option>
+      <option value="往崑山科大">往崑山科大</option>
+    </select>
+  </div>
+  <!-- 時間選擇 -->
+  <div class="form-group">
+    <label for="timeSelect">選擇時間：</label>
+    <select id="timeSelect">
+      <option value="">--請選擇--</option>
+      <!-- 動態產生 6:00 到 22:00 -->
+      <script>
+        const startHour = 6;
+        const endHour = 22;
+        for (let i = startHour; i <= endHour; i++) {
+          const option = document.createElement("option");
+          const hourStr = i.toString().padStart(2, "0") + ":00";
+          option.value = hourStr;
+          option.textContent = hourStr;
+          document.write(option.outerHTML); // 插入到 select 中
+        }
+      </script>
+    </select>
+  </div>
+  <!-- 確定按鈕 -->
+  <button id="confirmBtn">確定</button>
+  <!-- 顯示結果 -->
+  <div id="result">
+    <img id="routeImage" style="display:none; width:100%;" />
+    <div id="schedule" style="display:none; margin-top: 1em; background:#f0f0f0; padding:10px;"></div>
+  </div>
+  
+<!--下拉選單互相控制-->
+<script>
+  const typeSelect = document.getElementById("typeSelect");
+  const routeSelect = document.getElementById("routeSelect");
+  const directionSelect = document.getElementById("directionSelect");
+  const timeSelect = document.getElementById("timeSelect");
+
+  const timesAnping = [
+    "06:15", "06:30", "06:45", "07:00", "07:50", "08:35", "09:10", "09:40",
+    "10:20", "10:50", "11:20", "11:50", "12:20", "12:45", "13:30", "13:50",
+    "14:20", "14:50", "15:10", "15:30", "15:55", "16:15", "16:50", "17:15",
+    "17:30", "17:45", "18:20", "19:00", "19:50", "20:30", "21:30"
+  ].sort();
+
+  const timesKSU = [
+    "06:00", "06:25", "06:25", "07:30", "08:10", "09:03", "09:35", "10:10",
+    "10:30", "10:50", "11:10", "11:40", "12:10", "12:20", "13:08", "13:30",
+    "13:50", "14:30", "15:20", "15:50", "16:10", "16:30", "17:00", "17:10",
+    "17:25", "17:55", "18:38", "18:55", "19:50", "20:25", "21:10", "21:40"
+  ].sort();
+
+  function resetSelect(selectElement) {
+    selectElement.innerHTML = '<option value="">--請選擇--</option>';
+  }
+
+  function populateOptions(selectElement, optionsArray) {
+    resetSelect(selectElement);
+    optionsArray.forEach(time => {
+      const option = document.createElement("option");
+      option.value = time;
+      option.textContent = time;
+      selectElement.appendChild(option);
+    });
+  }
+
+  // 初始化：disable route, direction, time
+  routeSelect.disabled = true;
+  directionSelect.disabled = true;
+  timeSelect.disabled = true;
+
+  // A 選擇類型時邏輯
+  typeSelect.addEventListener("change", () => {
+    const selectedType = typeSelect.value;
+    if (selectedType === "市區公車" || selectedType === "全部") {
+      routeSelect.disabled = false;
+    } else {
+      routeSelect.disabled = true;
+      directionSelect.disabled = true;
+      timeSelect.disabled = true;
+      routeSelect.value = "";
+      directionSelect.value = "";
+      resetSelect(timeSelect);
+    }
+  });
+
+  // B 選擇路線時邏輯
+  routeSelect.addEventListener("change", () => {
+    const selectedRoute = routeSelect.value;
+    if (selectedRoute === "2路") {
+      directionSelect.disabled = false;
+    } else {
+      directionSelect.disabled = true;
+      timeSelect.disabled = true;
+      directionSelect.value = "";
+      resetSelect(timeSelect);
+    }
+  });
+
+  // C 選擇方向時邏輯
+  directionSelect.addEventListener("change", () => {
+    const selectedDirection = directionSelect.value;
+    if (selectedDirection === "往安平") {
+      timeSelect.disabled = false;
+      populateOptions(timeSelect, timesAnping);
+    } else if (selectedDirection === "往崑山科大") {
+      timeSelect.disabled = false;
+      populateOptions(timeSelect, timesKSU);
+    } else {
+      timeSelect.disabled = true;
+      resetSelect(timeSelect);
+    }
+  });
+</script>
+
+<!--顯示對應圖片-->
+  <script>
+  const confirmBtn = document.getElementById('confirmBtn');
+  const routeImage = document.getElementById('routeImage');
+  const scheduleDiv = document.getElementById('schedule');
+
+  const imageRules = {
+    '往安平': {
+      '1.png': ['06:15', '06:45', '08:35', '09:40', '10:20', '11:20', '13:30', '13:50',
+                '14:20', '14:50', '15:10', '15:30', '15:55', '17:30', '17:45', '18:20',
+                '19:00', '19:50', '21:30'],
+      '2.png': ['06:30', '09:10', '12:45', '16:15'],
+      '3.png': ['07:50', '10:50', '12:20', '17:15'],
+      '4.png': ['07:00', '11:50', '16:50', '20:30'],
+    },
+    '往崑山科大': {
+      '5.png': ['06:00', '08:10', '10:10', '10:30', '10:50', '11:40', '12:10', '13:30',
+                '15:20', '15:50', '16:10', '16:30', '17:00', '17:25', '17:55', '19:50', '20:25'],
+      '6.png': ['06:25', '09:03', '13:08', '18:38', '21:40'],
+      '7.png': ['06:25', '09:35', '12:20', '13:50', '18:55'],
+      '8.png': ['07:30', '11:10', '14:30', '17:10', '21:10'],
+    }
+  };
+
+  confirmBtn.addEventListener('click', () => {
+    const type = document.getElementById('typeSelect').value;
+    const route = document.getElementById('routeSelect').value;
+    const direction = document.getElementById('directionSelect').value;
+    const time = document.getElementById('timeSelect').value;
+
+    if (!type || !route || !direction || !time) {
+      alert('請選擇所有項目！');
+      return;
+    }
+
+    let foundImage = null;
+    const rules = imageRules[direction];
+    if (rules) {
+      for (const [image, times] of Object.entries(rules)) {
+        if (times.includes(time)) {
+          foundImage = image;
+          break;
+        }
+      }
+    }
+
+    if (foundImage) {
+      routeImage.src = `img/${foundImage}`;
+      routeImage.style.display = 'block';
+    } else {
+      routeImage.style.display = 'none';
+      alert('此時間沒有對應的圖片資料。');
+    }
+  });
+</script>
+
+  
+</body>
+</html>
